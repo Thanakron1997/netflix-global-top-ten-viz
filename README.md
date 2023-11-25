@@ -3,6 +3,7 @@ Project Netflix Global Top 10 Visualization
 - source data: https://www.netflix.com/tudum/top10
 - link public: https://thanakron1997.github.io/netflix-global-top-ten-viz/index.html
 ### GLOBAL TOP 10 Page
-![image](https://github.com/Thanakron1997/netflix-global-top-ten-viz/assets/100277150/6f321426-be2f-484e-987b-4ac99746eac0)
+![thanakron1997 github io_netflix-global-top-ten-viz_index html](https://github.com/Thanakron1997/netflix-global-top-ten-viz/assets/100277150/6128a8e8-063d-4b98-a3e9-3542e4763ada)
+
 ### REVENUE NETFLIX Page
-![image](https://github.com/Thanakron1997/netflix-global-top-ten-viz/assets/100277150/bb3d9b70-f2c6-40ef-89c8-430043557f8c)
+![thanakron1997 github io_netflix-global-top-ten-viz_revenuedata html (1)](https://github.com/Thanakron1997/netflix-global-top-ten-viz/assets/100277150/99ae75d2-7fcd-4807-980d-5d40d2d50302)
