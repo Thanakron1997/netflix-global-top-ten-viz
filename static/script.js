@@ -40,9 +40,8 @@ function createData(data,countries_data){
     // console.log(filteredData)
     
     table_id = '#table_1'
-    columns_name = ['show_title','weekly_hours_viewed','isAdult','runtimeMinutes','genres','averageRating']
     divShowTotal(filteredData,countries_data)
-    tabulate(dataUse,columns_name,table_id)
+    tabulate(dataUse,table_id)
     map_chart(filteredData)
     var table_top = document.getElementById("table_top");
     // console.log(table_top)
@@ -57,21 +56,47 @@ function createData(data,countries_data){
 }
 
 function editDataMap(tableRow,filteredData){
-  var name = tableRow.childNodes[0].innerHTML;
-  // console.log(name)
+  let selected = d3.select("#dropdown_year").node().value;
+  let selected2 = d3.select("#dropdown_month").node().value;
+  let selected3 = d3.select("#type_data").node().value;
+  let dataRaw = data.filter(function(d){return d.year==selected && d.quarter_of_year==selected2 && d.category == selected3}) 
+  let title_name = dataRaw.map(function(d) {return d.show_title;})
+  let netflix_top_countries = countries_data.filter(function(d){return d.year==selected && d.quarter==selected2 && d.category == selected3}) 
+  let allRawData = netflix_top_countries.filter(item => title_name.includes(item.show_title));
+  console.log(allRawData)
+
+  var name = tableRow.childNodes[1].innerHTML;
   let dataUse = filteredData.filter(function(d){return d.show_title==name }) 
-  // console.log(dataUse)
+  console.log(dataUse)
   d3.select("#world-map").remove()
   d3.select("#show-total").selectAll("div").remove()
-  d3.select("#legendDiv").style("visibility","hidden");
+  d3.select("#color-legend").remove()
   d3.select("#tooltipMap").remove()
-  mapSelectChart(dataUse)
+  mapSelectChart(dataUse,allRawData)
   divDetail(dataUse)
   d3.select("#forButton").select("button").style("visibility","visible")
+  var styledText = document.createElement("span");
+  styledText.innerHTML = `${name.toUpperCase()}`;
+  styledText.style.color = "red"; 
+  var changeTextElement = document.getElementById("changeText");
+  changeTextElement.innerHTML = '';
+  changeTextElement.appendChild(styledText);
+  changeTextElement.innerHTML += ` IN COUNTRIES AROUND THE WORLD`;
+  createLegendTwo()
 }
-function tabulate(data, columns,table_id) {
+
+function addRunNumber(array) {
+  array.forEach((item, index) => {
+      item.run_number = index + 1;
+  });
+  return array
+}
+
+function tabulate(data,table_id) {
   // console.log(data)
-  const formattedData = data.map(item => {
+  var columns = ['run_number','show_title','weekly_hours_viewed','runtimeMinutes','genres','averageRating']
+  let addNoData = addRunNumber(data)
+  const formattedData = addNoData.map(item => {
     if (typeof item.weekly_hours_viewed === 'number') {
       item.weekly_hours_viewed = item.weekly_hours_viewed.toLocaleString();
     }
@@ -81,7 +106,7 @@ function tabulate(data, columns,table_id) {
 	var table = d3.select(table_id).append('table')
 	var thead = table.append('thead')
 	var	tbody = table.append('tbody');
-  var col_name = ['title','weekly viewed (hours)','is Adult','runtime (mins)','genres','Rating']
+  var col_name = ['No','title','weekly viewed (hours)','runtime (mins)','genres','Rating']
 	// append the header row
   table.attr('id', 'table_top')
 	thead.append('tr')
@@ -108,7 +133,7 @@ function tabulate(data, columns,table_id) {
   return table;
 }
 
-function mapSelectChart(filteredData) {
+function mapSelectChart(filteredData,allRawData) {
     const aggregatedData = d3.rollup(
                 filteredData,
                 group => d3.sum(group, d => d.Counts),
@@ -119,6 +144,15 @@ function mapSelectChart(filteredData) {
                 country_name: country,
                 titles: Array.from(titles, ([title, counts]) => ({ title, counts })),
             }));
+    let forAllCountries = d3.rollup(allRawData,group => d3.sum(group, d => d.Counts),
+              d => d.country_name,
+              d => d.show_title
+          );
+    let dataMap2 = Array.from(forAllCountries, ([country, titles]) => ({
+              country_name: country,
+              titles: Array.from(titles, ([title, counts]) => ({ title, counts })),
+          }));
+    
     const margin = {
         top: 50,
         right: 10,
@@ -164,10 +198,15 @@ function mapSelectChart(filteredData) {
       .style("fill", d => {
                           // Match the country_name from your data with the GeoJSON features
                           const countryData = pieData.find(item => item.country_name === d.properties.NAME);
+                          let countryData2 = dataMap2.find(item => item.country_name === d.properties.NAME);
                           if (countryData) {
                               return "red"; // Use the color scale here
                           } else {
-                              return "rgba(200,200,200,0.6)"; // Default to gray if no data
+                            if (countryData2) {
+                              return "blue";
+                            } else {
+                              return "rgba(200,200,200,0.6)";
+                             } // Default to gray if no data
                           }
                           })
       .style('stroke', 'rgba(0,0,0,1)')
@@ -252,7 +291,10 @@ function map_chart(filteredData) {
         'transform',
         `translate(${margin.left},${margin.top})`
       )
-    const color_scale = d3.scaleLinear().domain([0, 10]).range(["white","red"])
+    const color_scale = d3.scaleLinear()
+    // .domain([0, 5, 10])  // Three values in the domain for three colors
+    // .range(["white", "yellow", "red"]);
+    .domain([0,5, 10]).range(["blue", "white","red"]);
     // console.log(color_scale(0))
     //   .style('border', 'solid');
     const projection = d3
@@ -292,7 +334,6 @@ function map_chart(filteredData) {
                     })
         .style('stroke', 'rgba(0,0,0,1)')
         .style("stroke-width", 1)
-
         // .style('opacity', 0.4)
         .on('mouseover', function (event, d) {
           // console.log(d.properties.name);
@@ -325,8 +366,6 @@ function map_chart(filteredData) {
           d3.select(this)
             .style('stroke', 'rgba(0,0,0,1)')
         .style("stroke-width", 1)
-
-            // .style('opacity', 0.4)
             ;
         });
     });
@@ -387,16 +426,16 @@ function divShowTotal(filteredData,data){
     .style('text-align', 'center')
     .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
     .html(`<strong> 
-    <span style="font-size: 12px;">
+    <span style="font-size: 15px; ">
     The countries ${uniCountry.length} of ${uniAllCountry.length} countries watch ${selected3} in the top 10 global
     </span></strong>
     `)
     showTotal.append('div')
     .style('overflow', 'auto')
-    .style('height', '58px')
+    .style('height', '130px')
     .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
     .html(
-      `<span style="font-size: 10px;">The Countries that watch all the top 10 global are ${result}</span>`
+      `<span style="font-size: 11px;">The Countries that watch all the top 10 global are ${result}</span>`
     )
 }
 
@@ -420,13 +459,13 @@ function divDetail(filteredData){
     .style('text-align', 'center')
     .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
     .html(`<strong> 
-    <span style="font-size: 12px;">
-    The countries ${uniCountry.length} of ${uniAllCountry.length} countries watching ${title}
+    <span style="font-size: 15px;">
+    The countries ${uniCountry.length} of ${uniAllCountry.length} countries watching "${title}"
     </span></strong>
     `)
     showTotal.append('div')
     .style('overflow', 'auto')
-    .style('height', '58px')
+    .style('height', '130px')
     .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
     .html(
       `<span style="font-size: 10px;">The Countries that watching ${title} are ${result}</span>`
@@ -457,7 +496,7 @@ function getTitlesData(d,pieData) {
     textRepresentation += '</table>'
     return textRepresentation
     } else {
-        return "<br> No Netfilx in this Country"
+        return ""
     }
 }
 
@@ -474,8 +513,13 @@ document.addEventListener('DOMContentLoaded',function(){
         d3.select("#table_1").select("table").remove()
         d3.select("#world-map").remove()
         d3.select("#tooltipMap").remove()
+        d3.select("#color-legend").remove()
+        d3.select("#forButton").select("button").style("visibility","hidden")
+        createLegend()
         createdropMonth(this.value,data)
         createData(data,countries_data)
+        document.getElementById("changeText").innerHTML = "GLOBAL TOP 10 IN COUNTRIES AROUND THE WORLD";
+
     });
     d3.select("#dropdown_month")
     .on("change",function(){
@@ -483,7 +527,13 @@ document.addEventListener('DOMContentLoaded',function(){
         d3.select("#show-total").selectAll("div").remove()
         d3.select("#world-map").remove()
         d3.select("#tooltipMap").remove()
+        d3.select("#color-legend").remove()
+        d3.select("#forButton").select("button").style("visibility","hidden")
+        createLegend()
         createData(data,countries_data)
+        document.getElementById("changeText").innerHTML = "GLOBAL TOP 10 IN COUNTRIES AROUND THE WORLD";
+
+        
     });
     d3.select("#type_data")
     .on("change",function(){
@@ -491,14 +541,13 @@ document.addEventListener('DOMContentLoaded',function(){
         d3.select("#show-total").selectAll("div").remove()
         d3.select("#world-map").remove()
         d3.select("#tooltipMap").remove()
+        d3.select("#color-legend").remove()
+        d3.select("#forButton").select("button").style("visibility","hidden")
+        createLegend()
         createData(data,countries_data)
+        document.getElementById("changeText").innerHTML = "GLOBAL TOP 10 IN COUNTRIES AROUND THE WORLD";
+
     });
-    // .button {
-    //   font-family: Netflix Sans,Helvetica Neue,Helvetica,Arial;
-    //   border: solid 5px rgba(255, 255, 255, 0.1);
-    //   background-color: #dddddd;
-    //   opacity: 0.7;color:#ffffff;border-radius:5px;
-    //   }
     d3.select("#forButton")
     .append("button")
     .text("Clear Data")
@@ -508,29 +557,33 @@ document.addEventListener('DOMContentLoaded',function(){
     .style("opacity","0.7")
     .style("color","rgba(255, 255, 255, 1)")
     .style("border-radius","10px")
-
-
     .style("visibility","hidden")
     .on("click", function() {
       d3.select("#table_1").select("table").remove()
       d3.select("#show-total").selectAll("div").remove()
       d3.select("#world-map").remove()
       d3.select("#tooltipMap").remove()
+      d3.select("#color-legend").remove()
       createData(data,countries_data)
-      d3.select("#legendDiv").style("visibility","visible");
+      createLegend()
       d3.select("#forButton").select("button").style("visibility","hidden")
-
-      // You can add your custom logic or actions here
+      document.getElementById("changeText").innerHTML = "GLOBAL TOP 10 IN COUNTRIES AROUND THE WORLD";
     });
 
 })
 function createLegend(){
 // Define the SVG element
+let div = d3.select("#legendDiv").append('svg')
+.attr('id', 'color-legend').attr("width", 200)
+.attr("height", 70);
 var svg = d3.select("#color-legend");
 // Define tick values
 var tickValues = [0,1,2,3,4,5,6,7,8,9,10];
 // Define the color scale
-var colorScale = d3.scaleLinear().domain([0, 10]).range(["white", "red"]);
+var colorScale =  d3.scaleLinear()
+// .domain([0, 5, 10])  // Three values in the domain for three colors
+// .range(["white", "yellow", "red"]);
+.domain([0, 5,10]).range(["blue","white", "red"]);
 // Calculate the width for each color segment
 var segmentWidth = 180 / tickValues.length;
 // Create color segments with associated text labels
@@ -572,4 +625,69 @@ svg.append("rect")
 .style("stroke", "black")
 .style('opacity', 0.4)
 .style("stroke-width", 1);
+}
+
+function createLegendTwo(){
+    // Set up the SVG container
+  var svg = d3.select("#legendDiv").append("svg")
+  .attr('id', 'color-legend')
+  .attr("width", 200)
+  .attr("height", 50);
+  var colorScale = d3.scaleOrdinal()
+    .domain(["Not Watching", "Watching"])
+    .range(["blue", "red"]);
+
+  // Create the legend
+  var legend = svg.selectAll(".legend")
+    .data(colorScale.domain())
+    .enter().append("g")
+    .attr("class", "legend")
+    .attr("transform", function(d, i) { return "translate(" + i * 110 + ",0)"; });
+
+    svg.append("text")
+    .attr("x", 100)
+    .attr("y", 10)
+    .text("Watching Legend")
+    .attr("text-anchor", "middle")
+    .attr("alignment-baseline", "middle")
+    .style("font-weight", "bold")
+    .style("font-size","11px")
+    .style("fill", "white");
+  // Add rectangles for each color in the legend
+  legend.append("rect")
+    .attr("width", 20)
+    .attr("height", 20)
+    .attr("x", 10)
+    .attr("y", 20)
+    .style("fill", colorScale);
+
+  // Add text labels for each color in the legend
+  legend.append("text")
+    .attr("x", 40)
+    .attr("y", 27)
+    .attr("dy", ".35em")
+    .style("text-anchor", "start")
+    .text(function(d) { return d; })
+    .attr("text-anchor", "middle")
+    .attr("alignment-baseline", "middle")
+    .style("fill", "white")
+    .style("font-size","9px");
+  svg.append("rect")
+  .attr("x", 10)
+  .attr("y", 20)
+  .attr("width", 20)
+  .attr("height", 20)
+  .style("fill", "none")
+  .style("stroke", "white")
+  .style('opacity', 0.5)
+  .style("stroke-width", 1);
+  svg.append("rect")
+  .attr("x", 120)
+  .attr("y", 20)
+  .attr("width", 20)
+  .attr("height", 20)
+  .style("fill", "none")
+  .style("stroke", "white")
+  .style('opacity', 0.5)
+  .style("stroke-width", 2);
 }

@@ -65,7 +65,6 @@ if (moreThan >0) {
 } else {
     var rawData = [{y:One,indexLabel: "Direct \nOne Movie",color: "rgba(255, 0, 0, 1)"}]
 }
-
 // console.log(rawData)
 let new_id = '#' + table_id
 let testdiv = 'Qtest' + table_id
@@ -99,6 +98,7 @@ createPie(testdiv,rawData)
 }
 
 function createPie(table_id,rawData){
+    console.log(rawData)
     var chart = new CanvasJS.Chart(table_id,
 	{       
         backgroundColor: "rgba(0, 0, 0, 0.0)",
@@ -109,17 +109,13 @@ function createPie(table_id,rawData){
           },
           axisY:{
             fontColor: "red",
-
-    
           },
 		data: [
 		{
-            // showInLegend: true,
             toolTipContent: "{y} - #percent %",
             labelFontColor: "rgba(255, 255, 255, 0.6)",
 			yValueFormatString: "# Directors",
 			type: "pie",
-			// legendText: "{indexLabel}",
 			dataPoints: rawData,
             indexLabelFontColor: "rgba(255, 255, 255, 0.6)" 
 		}
@@ -217,12 +213,14 @@ function createData(data){
             color: 'red',
         },
         line: {
-          color: 'red',
-          colorbar: {
-            title: {
-                side: "right",
-            }
-          }
+            // color:'red',
+            color: [0, 0.25, 0.5, 0.75, 1],
+        colorscale: [[0, '#ffcbbc'], [0.25, '#ff8d71'], [0.5, '#ff6345'], [0.75, '#ff0000'], [1, '#ff0000']],
+        //   colorbar: {
+        //     title: {
+        //         side: "right",
+        //     }
+        //   }
           
         },
         
@@ -243,6 +241,7 @@ function createData(data){
     const config = {
         displayModeBar: false,
       };
+    console.log(data_col)
     Plotly.newPlot('myDiv', data_col,layout,config);
 }
 

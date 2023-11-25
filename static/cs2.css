@@ -209,7 +209,7 @@ to {opacity: 1}
 display: none;
 }
 .grid-container {
-margin-left: 10%;
+/* margin-left: 10%; */
 padding: 10px;
 display: inline-grid;
 column-gap: 10px;
