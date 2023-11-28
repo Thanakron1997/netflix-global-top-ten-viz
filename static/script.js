@@ -48,7 +48,7 @@ function createData(data,countries_data){
     if (table_top) {
       for (var i = 1; i < table_top.rows.length; i++) {
         table_top.rows[i].onclick = function() {
-          console.log("test")
+          // console.log("test")
           editDataMap(this,filteredData)
         };
       }
@@ -63,17 +63,17 @@ function editDataMap(tableRow,filteredData){
   let title_name = dataRaw.map(function(d) {return d.show_title;})
   let netflix_top_countries = countries_data.filter(function(d){return d.year==selected && d.quarter==selected2 && d.category == selected3}) 
   let allRawData = netflix_top_countries.filter(item => title_name.includes(item.show_title));
-  console.log(allRawData)
+  // console.log(allRawData)
 
   var name = tableRow.childNodes[1].innerHTML;
-  let dataUse = filteredData.filter(function(d){return d.show_title==name }) 
-  console.log(dataUse)
+  let dataUse = netflix_top_countries.filter(function(d){return d.show_title==name }) 
+  // console.log(dataUse)
   d3.select("#world-map").remove()
   d3.select("#show-total").selectAll("div").remove()
   d3.select("#color-legend").remove()
   d3.select("#tooltipMap").remove()
   mapSelectChart(dataUse,allRawData)
-  divDetail(dataUse)
+  divDetail(dataUse,netflix_top_countries)
   d3.select("#forButton").select("button").style("visibility","visible")
   var styledText = document.createElement("span");
   styledText.innerHTML = `${name.toUpperCase()}`;
@@ -422,31 +422,31 @@ function divShowTotal(filteredData,data){
         result += countriesToShow.slice(0, -1).join(', ') + ', and ' + countriesToShow[countriesToShow.length - 1];
     }
     var showTotal = d3.select('#show-total');
-    showTotal.append('div')
-    .style('text-align', 'center')
-    .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
-    .html(`<strong> 
-    <span style="font-size: 15px; ">
-    The countries ${uniCountry.length} of ${uniAllCountry.length} countries watch ${selected3} in the top 10 global
-    </span></strong>
-    `)
-    showTotal.append('div')
-    .style('overflow', 'auto')
-    .style('height', '130px')
-    .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
-    .html(
-      `<span style="font-size: 11px;">The Countries that watch all the top 10 global are ${result}</span>`
-    )
+    
+    if (countriesToShow.length >0){
+      showTotal.append('div').style('text-align', 'center')
+      .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial').html(`<strong><span style="font-size: 15px; ">The countries ${countriesToShow.length} of ${uniCountry.length} countries watch all ${selected3} in the top 10 global</span></strong>`)
+      showTotal.append('div')
+      .style('overflow', 'auto')
+      .style('height', '130px')
+      .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
+      .html(`<span style="font-size: 11px;">The Countries that watch all the top 10 global are ${result}</span>`)
+    } else {
+      showTotal.append('div').style('text-align', 'center')
+      .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
+      .html(`<strong><span style="font-size: 15px; ">No country in these ${uniCountry.length} countries has watched all ${selected3} in the top 10 global</span></strong>`)
+    }
+    
 }
 
-function divDetail(filteredData){
+function divDetail(filteredData,netflix_top_countries){
   var selected3 = d3.select("#type_data").node().value;
   var uniCountry = Array.from(new Set(filteredData.map(function(d) {return d.country_name;})));
-  var uniAllCountry = Array.from(new Set(countries_data.map(function(d) {return d.country_name;})));
+  var uniAllCountry = Array.from(new Set(netflix_top_countries.map(function(d) {return d.country_name;})));
   var title =  Array.from(new Set(filteredData.map(function(d) {return d.show_title;}))); // get unique value 
-  console.log(title)
-  console.log(uniCountry)
-  console.log(data)
+  // console.log(title)
+  // console.log(uniCountry)
+  // console.log(data)
   let result = "";
 
   if (uniCountry.length === 1) {
@@ -454,22 +454,21 @@ function divDetail(filteredData){
   } else if (uniCountry.length > 1) {
       result += uniCountry.slice(0, -1).join(', ') + ', and ' + uniCountry[uniCountry.length - 1];
   }
-    var showTotal = d3.select('#show-total');
-    showTotal.append('div')
-    .style('text-align', 'center')
-    .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
-    .html(`<strong> 
-    <span style="font-size: 15px;">
-    The countries ${uniCountry.length} of ${uniAllCountry.length} countries watching "${title}"
-    </span></strong>
-    `)
-    showTotal.append('div')
-    .style('overflow', 'auto')
-    .style('height', '130px')
-    .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
-    .html(
-      `<span style="font-size: 10px;">The Countries that watching ${title} are ${result}</span>`
-    )
+  var showTotal = d3.select('#show-total');
+  if (uniCountry.length >0) {
+  showTotal.append('div').style('text-align', 'center')
+  .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
+  .html(`<strong> <span style="font-size: 15px;">The countries ${uniCountry.length} of ${uniAllCountry.length} countries watching "${title}"</span></strong>`)
+  showTotal.append('div').style('overflow', 'auto')
+  .style('height', '130px')
+  .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
+  .html(`<span style="font-size: 10px;">The Countries that watching ${title} are ${result}</span>`)
+  } else{
+  showTotal.append('div').style('text-align', 'center')
+  .style('font-family', 'Netflix Sans,Helvetica Neue,Helvetica,Arial')
+  .html(`<strong> <span style="font-size: 15px;">No country watching "${title}"</span></strong>`)
+  }
+  
 }
 
 function getTitlesData(d,pieData) {
